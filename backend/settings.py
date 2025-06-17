@@ -85,7 +85,7 @@ DATABASES = {
         'NAME': 'nutrix',
         'USER': 'postgres',
         'PASSWORD': 'Ferrari/*-',
-        'HOST': '192.168.1.6',
+        'HOST': '192.168.1.8',
         'PORT': '5432',
     }
 }
@@ -169,7 +169,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # o lo que prefieras
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=100),  # o lo que prefieras
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }

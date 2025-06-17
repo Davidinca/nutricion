@@ -74,8 +74,6 @@ class Nino(models.Model):
 
 # Modelo Logs# usuarios/models.py
 
-from django.db import models
-
 class LogActividad(models.Model):
     usuario = models.ForeignKey('Usuario', on_delete=models.CASCADE, related_name='logs')
     rol = models.CharField(max_length=50)
@@ -86,3 +84,98 @@ class LogActividad(models.Model):
 
     def __str__(self):
         return f"{self.accion} por {self.usuario} el {self.fecha_hora}"
+
+#Moedlo Historial
+
+class HistorialClinico(models.Model):
+    nino = models.ForeignKey(Nino, on_delete=models.CASCADE, related_name='historiales')
+    peso = models.FloatField(help_text="Peso en kilogramos")
+    talla = models.FloatField(help_text="Talla en metros")
+    actividad_fisica = models.CharField(max_length=20, choices=[
+        ('baja', 'Baja'),
+        ('media', 'Media'),
+        ('alta', 'Alta')
+    ])
+    enfermedades = models.TextField(blank=True)
+    alergias = models.TextField(blank=True)
+    observaciones = models.TextField(blank=True)
+    activo = models.BooleanField(default=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Historial de {self.nino.nombres} {self.nino.apellido_paterno} - {self.fecha_actualizacion.strftime('%Y-%m-%d')}"
+
+#Modelo Alimento
+
+class Alimento(models.Model):
+    CATEGORIAS = [
+        ('desayuno', 'Desayuno'),
+        ('almuerzo', 'Almuerzo'),
+        ('cena', 'Cena'),
+    ]
+
+    nombre = models.CharField(max_length=100)
+    categoria = models.CharField(max_length=20, choices=CATEGORIAS)
+    calorias = models.FloatField()
+    proteinas = models.FloatField()
+    grasas = models.FloatField()
+    carbohidratos = models.FloatField()
+    grupo_alimenticio = models.CharField(max_length=50)
+    alergenos = models.JSONField()
+
+    def __str__(self):
+        return self.nombre
+
+
+# Modelo Recomendacionesclass Recomendacion(models.Model):
+class Recomendacion(models.Model):
+    nino = models.ForeignKey(Nino, on_delete=models.CASCADE, related_name='recomendaciones')
+    fecha = models.DateField()
+    motivo = models.CharField(max_length=255)
+    fuente = models.JSONField()
+    estado = models.CharField(max_length=20, default='vigente')
+    calorias_totales = models.FloatField(null=True, blank=True)
+    proteinas_totales = models.FloatField(null=True, blank=True)
+    alergenos_evitados = models.JSONField(null=True, blank=True)
+    notas = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Recomendacion para {self.nino.nombres} {self.nino.apellido_paterno} - {self.fecha} ({self.estado})"
+
+
+class RecomendacionDesayuno(models.Model):
+    recomendacion = models.ForeignKey(Recomendacion, on_delete=models.CASCADE, related_name='desayunos')
+    alimento = models.ForeignKey(Alimento, on_delete=models.CASCADE, related_name='desayunos')
+
+    def __str__(self):
+        return f"Desayuno: {self.alimento.nombre} para recomendacion {self.recomendacion.id}"
+
+
+class RecomendacionAlmuerzo(models.Model):
+    recomendacion = models.ForeignKey(Recomendacion, on_delete=models.CASCADE, related_name='almuerzos')
+    alimento = models.ForeignKey(Alimento, on_delete=models.CASCADE, related_name='almuerzos')
+
+    def __str__(self):
+        return f"Almuerzo: {self.alimento.nombre} para recomendacion {self.recomendacion.id}"
+
+
+class RecomendacionCena(models.Model):
+    recomendacion = models.ForeignKey(Recomendacion, on_delete=models.CASCADE, related_name='cenas')
+    alimento = models.ForeignKey(Alimento, on_delete=models.CASCADE, related_name='cenas')
+
+    def __str__(self):
+        return f"Cena: {self.alimento.nombre} para recomendacion {self.recomendacion.id}"
+
+
+# Modelo Parametros
+
+class ParametroReferencia(models.Model):
+    edad_min = models.IntegerField(help_text="Edad mínima en años")
+    edad_max = models.IntegerField(help_text="Edad máxima en años")
+    calorias = models.IntegerField()
+    proteinas = models.FloatField(help_text="Proteínas en gramos")
+    hierro = models.FloatField(help_text="Hierro en miligramos")
+    fuente = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.edad_min}-{self.edad_max} años"
