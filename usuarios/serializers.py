@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from .models import Usuario, Nino, LogActividad, HistorialClinico, Alimento, RecomendacionAlmuerzo, RecomendacionCena, RecomendacionDesayuno, Recomendacion, ParametroReferencia
+from .models import Usuario, Nino, LogActividad, HistorialClinico, Alimento, RecomendacionAlmuerzo, RecomendacionCena, RecomendacionDesayuno, Recomendacion, ParametroReferencia, Permiso, RolPermiso, RolPersonalizado
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    rol = serializers.CharField(write_only=True)  # Nuevo campo para asignar rol
 
     class Meta:
         model = Usuario
@@ -10,15 +11,22 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'id', 'correo', 'password',
             'nombres', 'apellido_paterno', 'apellido_materno',
             'ci', 'direccion', 'telefono', 'ciudad',
-            'is_active', 'fecha_creacion', 'fecha_actualizacion'
+            'is_active', 'fecha_creacion', 'fecha_actualizacion',
+            'rol',  # incluir el rol como entrada
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
 
     def create(self, validated_data):
         password = validated_data.pop('password')
+        rol_nombre = validated_data.pop('rol')  # sacamos el rol
+
         usuario = Usuario(**validated_data)
         usuario.set_password(password)
         usuario.save()
+
+        # Creamos el rol para el usuario
+        RolPersonalizado.objects.create(usuario=usuario, rol=rol_nombre)
+
         return usuario
 
 
@@ -126,3 +134,46 @@ class ParametroReferenciaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParametroReferencia
         fields = '__all__'
+
+
+class PermisoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permiso
+        fields = ['id', 'nombre', 'descripcion', 'codigo']
+
+
+class RolPermisoSerializer(serializers.ModelSerializer):
+    permiso = PermisoSerializer(read_only=True)
+    permiso_id = serializers.PrimaryKeyRelatedField(
+        queryset=Permiso.objects.all(), source='permiso', write_only=True
+    )
+
+    class Meta:
+        model = RolPermiso
+        fields = ['id', 'rol', 'permiso', 'permiso_id']
+
+
+class RolPersonalizadoSerializer(serializers.ModelSerializer):
+    permisos = PermisoSerializer(many=True, read_only=True)
+    permiso_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Permiso.objects.all(), many=True, write_only=True
+    )
+
+    class Meta:
+        model = RolPersonalizado
+        fields = ['id', 'usuario', 'rol', 'permisos', 'permiso_ids']
+
+    def create(self, validated_data):
+        permisos = validated_data.pop('permiso_ids')
+        rol = RolPersonalizado.objects.create(**validated_data)
+        rol.permisos.set(permisos)
+        return rol
+
+    def update(self, instance, validated_data):
+        permisos = validated_data.pop('permiso_ids', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if permisos is not None:
+            instance.permisos.set(permisos)
+        return instance        

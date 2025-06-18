@@ -55,6 +55,15 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.nombres} {self.apellido_paterno} ({self.correo})"
+    
+
+    def tiene_permiso(self, codigo_permiso):
+        # Obtener todos los permisos a través de los roles personalizados del usuario
+        permisos = Permiso.objects.filter(
+            roles__usuario=self,
+            codigo=codigo_permiso
+        ).distinct()
+        return permisos.exists()
 
 
 # Modelo de niño relacionado a un usuario
@@ -179,3 +188,31 @@ class ParametroReferencia(models.Model):
 
     def __str__(self):
         return f"{self.edad_min}-{self.edad_max} años"
+
+
+
+class Permiso(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True)
+    codigo = models.CharField(max_length=50, unique=True)  # ej: "crear_recomendacion"
+
+    def __str__(self):
+        return self.nombre
+
+class RolPersonalizado(models.Model):
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='roles_personalizados')
+    rol = models.CharField(max_length=50)  # ej: admin, medico, nutricionista, padre
+    permisos = models.ManyToManyField(Permiso, through='RolPermiso', related_name='roles')
+
+    def __str__(self):
+        return f"{self.rol} - {self.usuario.correo}"
+
+class RolPermiso(models.Model):
+    rol = models.ForeignKey(RolPersonalizado, on_delete=models.CASCADE)
+    permiso = models.ForeignKey(Permiso, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('rol', 'permiso')
+
+    def __str__(self):
+        return f"{self.rol} -> {self.permiso}"

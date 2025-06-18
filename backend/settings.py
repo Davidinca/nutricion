@@ -37,9 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'usuarios',
+
     'rest_framework',
     'corsheaders',
+    'usuarios.apps.UsuariosConfig',
 
 
 ]
@@ -85,7 +86,7 @@ DATABASES = {
         'NAME': 'nutrix',
         'USER': 'postgres',
         'PASSWORD': 'Ferrari/*-',
-        'HOST': '192.168.1.8',
+        'HOST': '192.168.1.4',
         'PORT': '5432',
     }
 }
