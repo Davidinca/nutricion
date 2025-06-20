@@ -1,11 +1,11 @@
 from django.shortcuts import render
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .token import CustomTokenObtainPairSerializer
 from rest_framework import viewsets
 from .models import Usuario, Nino, LogActividad,HistorialClinico, Alimento, RecomendacionDesayuno, RecomendacionCena, RecomendacionAlmuerzo, Recomendacion, ParametroReferencia, Permiso, RolPersonalizado,RolPermiso
 from .serializers import UsuarioSerializer, NinoSerializer, HistorialClinicoSerializer, AlimentoSerializer, RecomendacionAlmuerzoSerializer,RecomendacionCenaSerializer, RecomendacionDesayunoSerializer, RecomendacionSerializer, ParametroReferenciaSerializer, PermisoSerializer, RolPermisoSerializer, RolPersonalizadoSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .token import CustomTokenObtainPairSerializer
 from .serializers import LogActividadSerializer
 from django.http import JsonResponse
 from .recomendador import generar_recomendacion_automatica_mejorada
@@ -90,6 +90,34 @@ class RolPersonalizadoViewSet(viewsets.ModelViewSet):
     queryset = RolPersonalizado.objects.all()
     serializer_class = RolPersonalizadoSerializer
     permission_classes = [IsAuthenticated, CustomDjangoModelPermission]
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        
+        # Obtener todos los permisos disponibles
+        all_permissions = Permiso.objects.all()
+        all_permissions_serializer = PermisoSerializer(all_permissions, many=True)
+        
+        # Añadirlos a la respuesta
+        data = serializer.data
+        data['all_permissions'] = all_permissions_serializer.data
+        
+        return Response(data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        
+        # Obtener todos los permisos disponibles
+        all_permissions = Permiso.objects.all()
+        all_permissions_serializer = PermisoSerializer(all_permissions, many=True)
+        
+        # Añadirlos a la respuesta
+        data = serializer.data
+        data['all_permissions'] = all_permissions_serializer.data
+        
+        return Response(data)
 
 
 class RolPermisoViewSet(viewsets.ModelViewSet):

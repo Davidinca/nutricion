@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'rest_framework',
     'corsheaders',
     'usuarios.apps.UsuariosConfig',
@@ -138,6 +137,12 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:5173"
+]
+
+# Orígenes de confianza para peticiones POST, PUT, etc.
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
